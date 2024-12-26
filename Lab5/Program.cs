@@ -206,6 +206,7 @@ public class Program
     public void Task_2_6(ref int[] A, int[] B)
     {
         // code here
+        // code here
         int maxIndexA = FindMax(A);
         int maxIndexB = FindMax(B);
 
@@ -213,9 +214,17 @@ public class Program
         B = DeleteElement(B, maxIndexB);
 
         int[] combinedArray = new int[A.Length + B.Length];
-        Array.Copy(A, 0, combinedArray, 0, A.Length);
-        Array.Copy(B, 0, combinedArray, A.Length, B.Length);
-        A = combinedArray;
+
+        for (int i = 0; i < A.Length; i++)
+        {
+            combinedArray[i] = A[i];
+        }
+        for (int i = 0; i < B.Length; i++)
+        {
+            combinedArray[A.Length + i] = B[i];
+        }
+
+        A = combinedArray; 
         // create and use FindMax(matrix, out row, out column); like in Task_2_1
         // create and use DeleteElement(array, index);
 
@@ -270,10 +279,17 @@ public class Program
     {
         if (startIndex >= array.Length) return;
 
-        int[] part = new int[array.Length - startIndex];
-        Array.Copy(array, startIndex, part, 0, part.Length);
-        Array.Sort(part);
-        Array.Copy(part, 0, array, startIndex, part.Length);
+        for (int i = startIndex; i < array.Length - 1; i++)
+        {
+            int minIndex = i;
+            for (int j = i + 1; j < array.Length; j++)
+            {
+                if (array[j] < array[minIndex]) minIndex = j;
+            }
+            int temp = array[i];
+            array[i] = array[minIndex];
+            array[minIndex] = temp;
+        }
     }
     public int[] Task_2_9(int[,] A, int[,] C)
     {
@@ -433,16 +449,18 @@ public class Program
     static void SortRow(int[,] matrix, int rowIndex)
     {
         int cols = matrix.GetLength(1);
-        int[] row = new int[cols];
+        for (int i = 0; i < cols - 1; i++)
+        {
+            int minIndex = i;
 
-        for (int j = 0; j < cols; j++)
-        {
-            row[j] = matrix[rowIndex, j];
-        }
-        Array.Sort(row);
-        for (int j = 0; j < cols; j++)
-        {
-            matrix[rowIndex, j] = row[j];
+            for (int j = i + 1; j < cols; j++)
+            {
+                if (matrix[rowIndex, j] < matrix[rowIndex, minIndex]) minIndex = j;
+            }
+
+            int temp = matrix[rowIndex, i];
+            matrix[rowIndex, i] = matrix[rowIndex, minIndex];
+            matrix[rowIndex, minIndex] = temp;
         }
     }
 
@@ -484,8 +502,18 @@ public class Program
             if (array[i] < 0) negatives[index++] = array[i];
         }
 
-        Array.Sort(negatives);
-        Array.Reverse(negatives);
+        for (int i = 0; i < negatives.Length - 1; i++)
+        {
+            for (int j = 0; j < negatives.Length - 1 - i; j++)
+            {
+                if (negatives[j] < negatives[j + 1]) 
+                {
+                    int temp = negatives[j];
+                    negatives[j] = negatives[j + 1];
+                    negatives[j + 1] = temp;
+                }
+            }
+        }
 
         index = 0;
         for (int i = 0; i < array.Length; i++)
@@ -513,13 +541,27 @@ public class Program
     }
     public static void SortDiagonal(int[,] matrix)
     {
-        int n = matrix.GetLength(0); 
+        int n = matrix.GetLength(0);
         int[] diagonal = new int[n];
+
         for (int i = 0; i < n; i++)
         {
             diagonal[i] = matrix[i, i];
         }
-        Array.Sort(diagonal);
+
+        for (int i = 0; i < n - 1; i++)
+        {
+            for (int j = 0; j < n - 1 - i; j++)
+            {
+                if (diagonal[j] > diagonal[j + 1])
+                {
+                    int temp = diagonal[j];
+                    diagonal[j] = diagonal[j + 1];
+                    diagonal[j + 1] = temp;
+                }
+            }
+        }
+
         for (int i = 0; i < n; i++)
         {
             matrix[i, i] = diagonal[i];
@@ -792,102 +834,70 @@ public class Program
     public void Task_2_28b(int[] first, int[] second, ref int[,] answerFirst, ref int[,] answerSecond)
     {
         // code here
-        int n = 0;
-        for (int i = 0; i < first.Length; i++)
-        {
-            for (int j = i + 1; j < first.Length; j++)
-            {
-                int seq = FindSequence(first, i, j);
-                if (seq != 0) n++;
-            }
-        }
-        answerFirst = new int[n, 2];
-        n = 0;
-        for (int i = 0; i < first.Length; i++)
-        {
-            for (int j = i + 1; j < first.Length; j++)
-            {
-                int seq = FindSequence(first, i, j);
-                if (seq != 0)
-                {
-                    answerFirst[n, 0] = i;
-                    answerFirst[n, 1] = j;
-                    n++;
-                }
-            }
-        }
-
-        n = 0;
-        for (int i = 0; i < second.Length; i++)
-        {
-            for (int j = i + 1; j < second.Length; j++)
-            {
-                int seq = FindSequence(second, i, j);
-                if (seq != 0) n++;
-            }
-        }
-        answerSecond = new int[n, 2];
-        n = 0;
-        for (int i = 0; i < second.Length; i++)
-        {
-            for (int j = i + 1; j < second.Length; j++)
-            {
-                int seq = FindSequence(second, i, j);
-                if (seq != 0)
-                {
-                    answerSecond[n, 0] = i;
-                    answerSecond[n, 1] = j;
-                    n++;
-                }
-            }
-        }
+        answerFirst = ProcessArray(first);
+        answerSecond = ProcessArray(second);
         // use FindSequence(array, A, B); from Task_2_28a or entirely Task_2_28a
         // A and B - start and end indexes of elements from array for search
 
         // end
     }
-    
+    private int[,] ProcessArray(int[] array)
+    {
+        int n = 0;
+
+        for (int i = 0; i < array.Length; i++)
+        {
+            for (int j = i + 1; j < array.Length; j++)
+            {
+                if (FindSequence(array, i, j) != 0) n++;
+            }
+        }
+
+        int[,] result = new int[n, 2];
+        n = 0;
+        for (int i = 0; i < array.Length; i++)
+        {
+            for (int j = i + 1; j < array.Length; j++)
+            {
+                if (FindSequence(array, i, j) != 0)
+                {
+                    result[n, 0] = i;
+                    result[n, 1] = j;
+                    n++;
+                }
+            }
+        }
+
+        return result;
+    }
     public void Task_2_28c(int[] first, int[] second, ref int[] answerFirst, ref int[] answerSecond)
     {
         // code here
-        int startfirst = 0;
-        int endfirst = 0;
-        int length1 = first.Length;
-        for (int i = 0; i < length1; i++)
-        {
-            for (int j = i + 1; j < length1; j++)
-            {
-                if (FindSequence(first, i, j) != 0 && (endfirst - startfirst) < (j - i))
-                {
-                    startfirst = i;
-                    endfirst = j;
-                }
-            }
-        }
-        answerFirst = new int[2];
-        answerFirst[0] = startfirst;
-        answerFirst[1] = endfirst;
-        int startsecond = 0;
-        int endsecond = 0;
-        int length2 = second.Length;
-        for (int i = 0; i < length2; i++)
-        {
-            for (int j = i + 1; j < length2; j++)
-            {
-                if (FindSequence(second, i, j) != 0 && (endsecond - startsecond) < (j - i))
-                {
-                    startsecond = i;
-                    endsecond = j;
-                }
-            }
-        }
-        answerSecond = new int[2];
-        answerSecond[0] = startsecond;
-        answerSecond[1] = endsecond;
+        answerFirst = FindLongestSequence(first);
+        answerSecond = FindLongestSequence(second);
         // use FindSequence(array, A, B); from Task_2_28a or entirely Task_2_28a or Task_2_28b
         // A and B - start and end indexes of elements from array for search
 
         // end
+    }
+    private int[] FindLongestSequence(int[] array)
+    {
+        int start = 0, end = 0;
+        int length = array.Length;
+
+        for (int i = 0; i < length; i++)
+        {
+            for (int j = i + 1; j < length; j++)
+            {
+                if (FindSequence(array, i, j) != 0 && (end - start) < (j - i))
+                {
+                    start = i;
+                    end = j;
+                }
+            }
+        }
+
+        return new int[] { start, end };
     }
     #endregion
 
@@ -1293,12 +1303,10 @@ public class Program
     }
     public double[,] Task_4(double[,] matrix, int index)
     {
-        // MatrixConverter[] mc = new MatrixConverter[4]; - uncomment me
 
         // code here
         MatrixConverter[] mc = { ToUpperTriangular, ToLowerTriangular, ToLeftDiagonal, ToRightDiagonal };
         mc[index](matrix);
-        return matrix;
         // create public delegate MatrixConverter(matrix);
         // create and use method ToUpperTriangular(matrix);
         // create and use method ToLowerTriangular(matrix);
